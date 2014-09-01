@@ -51,4 +51,9 @@ public class NameLookup {
         return user.getUsername();
     }
 
+    public String nameFromCache(String userId) {
+        // TODO Auto-generated method stub
+        return mUserNames.get(userId);
+    }
+
 }

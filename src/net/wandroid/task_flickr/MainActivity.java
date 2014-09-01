@@ -3,13 +3,11 @@ package net.wandroid.task_flickr;
 
 import com.googlecode.flickrjandroid.FlickrException;
 import com.googlecode.flickrjandroid.REST;
-import com.googlecode.flickrjandroid.people.PeopleInterface;
 import com.googlecode.flickrjandroid.photos.Photo;
 import com.googlecode.flickrjandroid.photos.PhotoList;
 import com.googlecode.flickrjandroid.photos.PhotosInterface;
 import com.googlecode.flickrjandroid.photos.SearchParameters;
 
-import net.wandroid.task_flickr.ui.NameLookup;
 import net.wandroid.task_flickr.ui.SearchResult;
 import net.wandroid.task_flickr.ui.SearchResultListAdapter;
 import net.wandroid.task_flickr.ui.SearchResultListFragment.ISearchResultListClickListener;
@@ -38,7 +36,6 @@ public class MainActivity extends Activity implements ISearchResultListClickList
     private static final String SEARCH_TEXT = "squirrel";
     private static final int MAX_HITS = 30;
     private ListFragment mSearchListFragment;
-    private NameLookup mNameLookup;
     private TextView mInfoText;
     private Button mSearchButton;
 
@@ -52,20 +49,6 @@ public class MainActivity extends Activity implements ISearchResultListClickList
 
         FragmentManager manager=getFragmentManager();
         mSearchListFragment= (ListFragment)manager.findFragmentById(R.id.main_list_fragment);
-
-        String key=getResources().getString(R.string.API_KEY);
-        String secret=getResources().getString(R.string.API_SECRET);
-        REST rest;
-        try {
-            rest = new REST();
-        } catch (ParserConfigurationException e) {
-            mInfoText.setText("Error initating REST");
-            mInfoText.setVisibility(View.VISIBLE);
-            mSearchButton.setVisibility(View.GONE);
-            e.printStackTrace();
-            return;
-        }
-        mNameLookup=new NameLookup(new PeopleInterface(key, secret, rest));
     }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -93,26 +76,7 @@ public class MainActivity extends Activity implements ISearchResultListClickList
                 PhotoList photos = search(SEARCH_TEXT);
                 ArrayList<SearchResult> list=new ArrayList<SearchResult>();
                 for(Photo p:photos){
-                    String id=p.getOwner().getId();
-                    String userName=null;
-                    try {
-                        //find user name corresponding to the user ID
-                        userName=mNameLookup.IdToUserName(id);
-                    } catch (IOException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    } catch (FlickrException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    } catch (JSONException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
-                    if(userName==null){
-                        //if there was an error or the user name could not be found
-                        userName=getResources().getString(R.string.no_user_name_txt);
-                    }
-                    list.add(new SearchResult(p, userName));
+                    list.add(new SearchResult(p));
                 }
                 return list;
             }

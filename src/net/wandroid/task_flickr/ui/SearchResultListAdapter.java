@@ -1,12 +1,19 @@
 
 package net.wandroid.task_flickr.ui;
 
+import com.googlecode.flickrjandroid.FlickrException;
+import com.googlecode.flickrjandroid.REST;
+import com.googlecode.flickrjandroid.people.PeopleInterface;
+
+import org.json.JSONException;
+
 import net.wandroid.task_flikr.R;
 
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.AsyncTask;
 import android.text.TextUtils;
 import android.util.LruCache;
 import android.view.LayoutInflater;
@@ -15,6 +22,10 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import java.io.IOException;
+
+import javax.xml.parsers.ParserConfigurationException;
 
 /**
  * Adapter for a flickr search result list
@@ -31,24 +42,31 @@ public class SearchResultListAdapter extends ArrayAdapter<SearchResult> {
 
     private LayoutInflater mInflater;
 
-    private String mAuthorStr;
-
     private String mNoTitleStr;
 
-    private String mTitleStr;
+    private NameLookup mNameLookup;
 
     public SearchResultListAdapter(Context context, int resource) {
         super(context, resource);
         mInflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
-        // note that these string might not be properly changed on an
+        // note that these resources might not be properly changed on an
         // onConfigurationChange
         Resources res = getContext().getResources();
-        mAuthorStr = res.getString(R.string.author_txt);
         mNoTitleStr = res.getString(R.string.no_title_txt);
-        mTitleStr = res.getString(R.string.title_txt);
-        DEFAULT_BITMAP = BitmapFactory.decodeResource(getContext().getResources(),
+        DEFAULT_BITMAP = BitmapFactory.decodeResource(res,
                 R.drawable.ic_launcher);
+
+        try {
+            REST rest = new REST();
+            PeopleInterface pi = new PeopleInterface(context.getResources().getString(
+                    R.string.API_KEY), context.getResources().getString(R.string.API_SECRET), rest);
+            mNameLookup = new NameLookup(pi);
+        } catch (ParserConfigurationException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
     }
 
     @Override
@@ -64,27 +82,30 @@ public class SearchResultListAdapter extends ArrayAdapter<SearchResult> {
                     .findViewById(R.id.word_search_thumbnail_image);
 
             holder = new Holder(title, author, thumbnail, new DownloadThumbnailTask(thumbnail,
-                    getContext(), sThumbnailLru));
+                    getContext(), sThumbnailLru),
+                    new DownloadUserNameTask(author, mNameLookup));
             convertView.setTag(holder);
 
         } else {// reusing view
             holder = (Holder)convertView.getTag();
 
             // the view is reused, so there's no point in finishing the download
-            holder.downloader.cancel(true);
+            holder.imgDownloader.cancel(true);
             // create new image downloader task for this view
-            holder.downloader = new DownloadThumbnailTask(holder.thumbnail, getContext(),
+            holder.imgDownloader = new DownloadThumbnailTask(holder.thumbnail, getContext(),
                     sThumbnailLru);
-        }
 
-        // set author
-        holder.author.setText(mAuthorStr + result.getUserName());
+            // the view is reused, so there's no point in finishing the download
+            holder.nameDownloader.cancel(true);
+         // create new name downloader task for this view
+            holder.nameDownloader=new DownloadUserNameTask(holder.author, mNameLookup);
+        }
 
         // set title
         if (TextUtils.isEmpty(result.getTitle())) {
             holder.title.setText(mNoTitleStr);
         } else {
-            holder.title.setText(mTitleStr + result.getTitle());
+            holder.title.setText(result.getTitle());
         }
 
         // set image to default image in case there is no cached version
@@ -92,11 +113,18 @@ public class SearchResultListAdapter extends ArrayAdapter<SearchResult> {
 
         Bitmap bmp = sThumbnailLru.get(result.getThumbnailAddress());
         if (bmp == null) {// nothing cached, start downloading
-            holder.downloader.execute(result.getThumbnailAddress());
+            holder.imgDownloader.execute(result.getThumbnailAddress(), result.getUserId());
         } else {
             holder.thumbnail.setImageBitmap(bmp);
         }
 
+        holder.author.setText("");
+        String name=mNameLookup.nameFromCache(result.getUserId());
+        if(name==null){
+            holder.nameDownloader.execute(result.getUserId());
+        }else{
+            holder.author.setText(name);
+        }
         return convertView;
     }
 
@@ -110,17 +138,72 @@ public class SearchResultListAdapter extends ArrayAdapter<SearchResult> {
 
         private ImageView thumbnail;
 
-        private DownloadThumbnailTask downloader;
+        private DownloadThumbnailTask imgDownloader;
+
+        private DownloadUserNameTask nameDownloader;
 
         public Holder(TextView title, TextView author, ImageView thumbnail,
-                DownloadThumbnailTask downloader) {
+                DownloadThumbnailTask imgDownloader,DownloadUserNameTask nameDownloader) {
             super();
             this.title = title;
             this.author = author;
             this.thumbnail = thumbnail;
-            this.downloader = downloader;
-
+            this.imgDownloader = imgDownloader;
+            this.nameDownloader=nameDownloader;
         }
+    }
+
+    /**
+     * Class to download user name from id
+     */
+    private class DownloadUserNameTask extends AsyncTask<String, Void, String>{
+
+        private TextView mText;
+        private NameLookup mNameLookup;
+
+
+
+        public DownloadUserNameTask(TextView text, NameLookup nameLookup) {
+            super();
+            mText = text;
+            mNameLookup = nameLookup;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            //clear text while downloading
+            mText.setText("");
+        }
+
+        @Override
+        protected String doInBackground(String... id) {
+            String name=null;
+            try {
+                name = mNameLookup.IdToUserName(id[0]);
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (FlickrException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (JSONException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            return name;
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
+            if(TextUtils.isEmpty(result)){
+                mText.setText("");
+            }else{//set author text
+                mText.setText(result);
+            }
+        }
+
     }
 
 }

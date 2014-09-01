@@ -15,13 +15,10 @@ public class SearchResult {
 
     private String mThumbnailAddress;
 
-    private String mUserName;
-
-    public SearchResult(final Photo photo, String userName) {
+    public SearchResult(final Photo photo) {
         mTitle = photo.getTitle();
         mUserId = photo.getOwner().getId();
         mThumbnailAddress = photo.getThumbnailUrl();
-        mUserName = userName;
     }
 
     public String getTitle() {
@@ -30,10 +27,6 @@ public class SearchResult {
 
     public String getUserId() {
         return mUserId;
-    }
-
-    public String getUserName() {
-        return mUserName;
     }
 
     public String getThumbnailAddress() {

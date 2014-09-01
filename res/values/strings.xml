@@ -9,8 +9,6 @@
     <string name="searching_txt">Searching...</string>
     <string name="no_user_name_txt">Uknown User Id</string>
     <string name="no_result_txt">Error/No Result Found</string>
-    <string name="author_txt">Author: </string>
-    <string name="title_txt">Title: </string>
     <string name="no_title_txt">No Title</string>
     <string name="bad_intentions_txt">No/Incorrect Intent</string>
     <string name="no_user_images_txt">No images/could not load :(</string>
