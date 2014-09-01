@@ -9,7 +9,7 @@ import com.googlecode.flickrjandroid.photos.PhotosInterface;
 import com.googlecode.flickrjandroid.photos.SearchParameters;
 
 import net.wandroid.task_flickr.ui.SearchResultListAdapter;
-import net.wandroid.task_flickr.ui.SearchResultListFragment.ISearchResultListClickListener;
+import net.wandroid.task_flickr.ui.SearchResultListFragment.ISearchResultListListener;
 import net.wandroid.task_flikr.R;
 
 import org.json.JSONException;
@@ -22,24 +22,27 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.View;
-import android.widget.Button;
 import android.widget.TextView;
 
 import java.io.IOException;
 
 import javax.xml.parsers.ParserConfigurationException;
 
-public class MainActivity extends Activity implements ISearchResultListClickListener {
+public class MainActivity extends Activity implements ISearchResultListListener {
+
+    private static final int FIRST_PAGE = 1;
 
     private static final String SEARCH_TEXT = "squirrel";
 
-    private static final int MAX_HITS = 30;
+    private static final int MAX_HITS = 10;
 
     private ListFragment mSearchListFragment;
 
     private TextView mInfoText;
 
-    private Button mSearchButton;
+    private int mPage = FIRST_PAGE;
+
+    private boolean mIsLoadingList = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,7 +50,6 @@ public class MainActivity extends Activity implements ISearchResultListClickList
         setContentView(R.layout.activity_main);
 
         mInfoText = (TextView)findViewById(R.id.activity_main_info_text);
-        mSearchButton = (Button)findViewById(R.id.activity_main_search_button);
 
         FragmentManager manager = getFragmentManager();
         mSearchListFragment = (ListFragment)manager.findFragmentById(R.id.main_list_fragment);
@@ -65,14 +67,16 @@ public class MainActivity extends Activity implements ISearchResultListClickList
         SearchResultListAdapter adapter = (SearchResultListAdapter)mSearchListFragment
                 .getListAdapter();
         adapter.clear();
-        downloadPage(1);
+        mPage = FIRST_PAGE;
+        downloadPage(mPage);
     }
 
     /**
      * Downloads a search page and add the adapter
+     *
      * @param page the page to load
      */
-    private  void downloadPage(int page) {
+    private void downloadPage(int page) {
         new DownloadPhotoInfoTask().execute(page);
     }
 
@@ -121,12 +125,10 @@ public class MainActivity extends Activity implements ISearchResultListClickList
     private class DownloadPhotoInfoTask extends AsyncTask<Integer, Void, PhotoList> {
         private int mPage;
 
-
         protected void onPreExecute() {
             // set gui to searching state
             mInfoText.setVisibility(View.VISIBLE);
             mInfoText.setText(getResources().getString(R.string.searching_txt));
-            mSearchButton.setEnabled(false);
         }
 
         @Override
@@ -144,20 +146,26 @@ public class MainActivity extends Activity implements ISearchResultListClickList
             adapter.addAll(result);
 
             // reset the gui state
-            if (result.size() == 0 && mPage == 0) { // could not find any result at all
+            if (result.isEmpty() && mPage == FIRST_PAGE) { // could not find any result
+                                                    // at all
                 mInfoText.setText(getResources().getString(R.string.no_result_txt));
 
             } else {
                 mInfoText.setVisibility(View.GONE);
             }
 
-            if (result.size() != 0) {//there are more pages
-                downloadPage(mPage + 1);
-            }else{ // no more pages, enable search button again
-                mSearchButton.setEnabled(true);
-            }
+            mIsLoadingList=false;
         }
 
+    }
+
+    @Override
+    public void onScrolledCloseToBottom() {
+        if (!mIsLoadingList) {//only load a page at the time
+            mIsLoadingList=true;
+            mPage++;
+            downloadPage(mPage);
+        }
     }
 
 }
