@@ -4,6 +4,7 @@ package net.wandroid.task_flickr.ui;
 import com.googlecode.flickrjandroid.FlickrException;
 import com.googlecode.flickrjandroid.REST;
 import com.googlecode.flickrjandroid.people.PeopleInterface;
+import com.googlecode.flickrjandroid.photos.Photo;
 
 import org.json.JSONException;
 
@@ -30,7 +31,7 @@ import javax.xml.parsers.ParserConfigurationException;
 /**
  * Adapter for a flickr search result list
  */
-public class SearchResultListAdapter extends ArrayAdapter<SearchResult> {
+public class SearchResultListAdapter extends ArrayAdapter<Photo> {
     private static final int PART_MEM_FOR_CACHE = 4;
 
     private static final int sMaxMemory = (int)(Runtime.getRuntime().maxMemory() / 1024);
@@ -71,7 +72,7 @@ public class SearchResultListAdapter extends ArrayAdapter<SearchResult> {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        SearchResult result = getItem(position);
+        Photo result = getItem(position);
         Holder holder = null;
 
         if (convertView == null) {// not reusing, create a new view
@@ -111,17 +112,18 @@ public class SearchResultListAdapter extends ArrayAdapter<SearchResult> {
         // set image to default image in case there is no cached version
         holder.thumbnail.setImageBitmap(DEFAULT_BITMAP);
 
-        Bitmap bmp = sThumbnailLru.get(result.getThumbnailAddress());
+        Bitmap bmp = sThumbnailLru.get(result.getThumbnailUrl());
+        String userId=result.getOwner().getId();
         if (bmp == null) {// nothing cached, start downloading
-            holder.imgDownloader.execute(result.getThumbnailAddress(), result.getUserId());
+            holder.imgDownloader.execute(result.getThumbnailUrl(), userId);
         } else {
             holder.thumbnail.setImageBitmap(bmp);
         }
 
         holder.author.setText("");
-        String name=mNameLookup.nameFromCache(result.getUserId());
+        String name=mNameLookup.nameFromCache(userId);
         if(name==null){
-            holder.nameDownloader.execute(result.getUserId());
+            holder.nameDownloader.execute(userId);
         }else{
             holder.author.setText(name);
         }
@@ -160,8 +162,6 @@ public class SearchResultListAdapter extends ArrayAdapter<SearchResult> {
 
         private TextView mText;
         private NameLookup mNameLookup;
-
-
 
         public DownloadUserNameTask(TextView text, NameLookup nameLookup) {
             super();

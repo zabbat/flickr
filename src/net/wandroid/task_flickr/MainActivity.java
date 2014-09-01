@@ -8,7 +8,6 @@ import com.googlecode.flickrjandroid.photos.PhotoList;
 import com.googlecode.flickrjandroid.photos.PhotosInterface;
 import com.googlecode.flickrjandroid.photos.SearchParameters;
 
-import net.wandroid.task_flickr.ui.SearchResult;
 import net.wandroid.task_flickr.ui.SearchResultListAdapter;
 import net.wandroid.task_flickr.ui.SearchResultListFragment.ISearchResultListClickListener;
 import net.wandroid.task_flikr.R;
@@ -27,7 +26,6 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import java.io.IOException;
-import java.util.ArrayList;
 
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -62,7 +60,7 @@ public class MainActivity extends Activity implements ISearchResultListClickList
         SearchResultListAdapter adapter= (SearchResultListAdapter)mSearchListFragment.getListAdapter();
         adapter.clear();
 
-        new AsyncTask<Void, Void, ArrayList<SearchResult>>(){
+        new AsyncTask<Void, Void, PhotoList>(){
 
             protected void onPreExecute() {
                 // set gui to searching state
@@ -72,17 +70,13 @@ public class MainActivity extends Activity implements ISearchResultListClickList
             }
 
             @Override
-            protected ArrayList<SearchResult> doInBackground(Void... arg0) {
+            protected PhotoList doInBackground(Void... arg0) {
                 PhotoList photos = search(SEARCH_TEXT);
-                ArrayList<SearchResult> list=new ArrayList<SearchResult>();
-                for(Photo p:photos){
-                    list.add(new SearchResult(p));
-                }
-                return list;
+                return photos;
             }
 
             @Override
-            protected void onPostExecute(ArrayList<SearchResult> result) {
+            protected void onPostExecute(PhotoList result) {
                 super.onPostExecute(result);
                 SearchResultListAdapter adapter= (SearchResultListAdapter)mSearchListFragment.getListAdapter();
                 adapter.addAll(result);
@@ -135,10 +129,10 @@ public class MainActivity extends Activity implements ISearchResultListClickList
     }
 
     @Override
-    public void itemClicked(SearchResult result) {
+    public void itemClicked(Photo result) {
         //Item in list clicked, start the view activity
         Intent intent=new Intent(getApplicationContext(), ViewActivity.class);
-        intent.putExtra(ViewActivity.FLICKR_USER_ID, result.getUserId());
+        intent.putExtra(ViewActivity.FLICKR_USER_ID, result.getOwner().getId());
         startActivity(intent);
     }
 

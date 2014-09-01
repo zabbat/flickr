@@ -1,6 +1,8 @@
 
 package net.wandroid.task_flickr.ui;
 
+import com.googlecode.flickrjandroid.photos.Photo;
+
 import net.wandroid.task_flikr.R;
 
 import android.app.Activity;
@@ -22,7 +24,7 @@ public class SearchResultListFragment extends ListFragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        ArrayAdapter<SearchResult> adapter = new SearchResultListAdapter(getActivity(),
+        ArrayAdapter<Photo> adapter = new SearchResultListAdapter(getActivity(),
                 R.layout.word_search_item);
         setListAdapter(adapter);
         return super.onCreateView(inflater, container, savedInstanceState);
@@ -45,7 +47,7 @@ public class SearchResultListFragment extends ListFragment {
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
         super.onListItemClick(l, v, position, id);
-        SearchResult result = (SearchResult)getListAdapter().getItem(position);
+        Photo result = (Photo)getListAdapter().getItem(position);
         mSearchResultListClickListener.itemClicked(result);
     }
 
@@ -53,12 +55,12 @@ public class SearchResultListFragment extends ListFragment {
      * Interface for listening to a list click.
      */
     public interface ISearchResultListClickListener {
-        public void itemClicked(SearchResult result);
+        public void itemClicked(Photo result);
 
         //Null object pattern, to avoid pesky null checks.
         public static ISearchResultListClickListener NO_LISTENER = new ISearchResultListClickListener() {
             @Override
-            public void itemClicked(SearchResult result) {
+            public void itemClicked(Photo result) {
             }
         };
     }
