@@ -29,12 +29,16 @@ import java.io.IOException;
 
 import javax.xml.parsers.ParserConfigurationException;
 
-public class MainActivity extends Activity implements ISearchResultListClickListener{
+public class MainActivity extends Activity implements ISearchResultListClickListener {
 
     private static final String SEARCH_TEXT = "squirrel";
+
     private static final int MAX_HITS = 30;
+
     private ListFragment mSearchListFragment;
+
     private TextView mInfoText;
+
     private Button mSearchButton;
 
     @Override
@@ -42,12 +46,13 @@ public class MainActivity extends Activity implements ISearchResultListClickList
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mInfoText=(TextView)findViewById(R.id.activity_main_info_text);
-        mSearchButton=(Button)findViewById(R.id.activity_main_search_button);
+        mInfoText = (TextView)findViewById(R.id.activity_main_info_text);
+        mSearchButton = (Button)findViewById(R.id.activity_main_search_button);
 
-        FragmentManager manager=getFragmentManager();
-        mSearchListFragment= (ListFragment)manager.findFragmentById(R.id.main_list_fragment);
+        FragmentManager manager = getFragmentManager();
+        mSearchListFragment = (ListFragment)manager.findFragmentById(R.id.main_list_fragment);
     }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -55,62 +60,40 @@ public class MainActivity extends Activity implements ISearchResultListClickList
         return true;
     }
 
-    public void searchClick(View v){
-        //clear old search results
-        SearchResultListAdapter adapter= (SearchResultListAdapter)mSearchListFragment.getListAdapter();
+    public void searchClick(View v) {
+        // clear old search results
+        SearchResultListAdapter adapter = (SearchResultListAdapter)mSearchListFragment
+                .getListAdapter();
         adapter.clear();
-
-        new AsyncTask<Void, Void, PhotoList>(){
-
-            protected void onPreExecute() {
-                // set gui to searching state
-                mInfoText.setVisibility(View.VISIBLE);
-                mInfoText.setText(getResources().getString(R.string.searching_txt));
-                mSearchButton.setEnabled(false);
-            }
-
-            @Override
-            protected PhotoList doInBackground(Void... arg0) {
-                PhotoList photos = search(SEARCH_TEXT);
-                return photos;
-            }
-
-            @Override
-            protected void onPostExecute(PhotoList result) {
-                super.onPostExecute(result);
-                SearchResultListAdapter adapter= (SearchResultListAdapter)mSearchListFragment.getListAdapter();
-                adapter.addAll(result);
-
-                //reset the gui state
-                if(result.size()==0){  // could not find any result
-                    mInfoText.setText(getResources().getString(R.string.no_result_txt));
-                }else{
-                    mInfoText.setVisibility(View.GONE);
-                }
-                mSearchButton.setEnabled(true);
-            }
-
-        }.execute();
-
+        downloadPage(1);
     }
 
+    /**
+     * Downloads a search page and add the adapter
+     * @param page the page to load
+     */
+    private  void downloadPage(int page) {
+        new DownloadPhotoInfoTask().execute(page);
+    }
 
     /**
      * Uses flickr api to search. Must not be executed on main thread
+     *
      * @param text The text to search for
-     * @return a PhotoList with matches. If any error occurs an empty list will be returned
+     * @return a PhotoList with matches. If any error occurs an empty list will
+     *         be returned
      */
-    private PhotoList search(String text){
+    private PhotoList search(String text, int page) {
         REST restTransport;
-        PhotoList list =new PhotoList();
+        PhotoList list = new PhotoList();
         try {
-            restTransport=new REST();
-            String apiKey=getResources().getString(R.string.API_KEY);
-            String apiSecret=getResources().getString(R.string.API_SECRET);
-            PhotosInterface pi=new PhotosInterface(apiKey, apiSecret, restTransport);
-            SearchParameters params=new SearchParameters();
+            restTransport = new REST();
+            String apiKey = getResources().getString(R.string.API_KEY);
+            String apiSecret = getResources().getString(R.string.API_SECRET);
+            PhotosInterface pi = new PhotosInterface(apiKey, apiSecret, restTransport);
+            SearchParameters params = new SearchParameters();
             params.setText(text);
-            list=pi.search(params, MAX_HITS, 0);
+            list = pi.search(params, MAX_HITS, page);
         } catch (ParserConfigurationException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -125,19 +108,56 @@ public class MainActivity extends Activity implements ISearchResultListClickList
             e.printStackTrace();
         }
         return list;
-
     }
 
     @Override
     public void itemClicked(Photo result) {
-        //Item in list clicked, start the view activity
-        Intent intent=new Intent(getApplicationContext(), ViewActivity.class);
+        // Item in list clicked, start the view activity
+        Intent intent = new Intent(getApplicationContext(), ViewActivity.class);
         intent.putExtra(ViewActivity.FLICKR_USER_ID, result.getOwner().getId());
         startActivity(intent);
     }
 
+    private class DownloadPhotoInfoTask extends AsyncTask<Integer, Void, PhotoList> {
+        private int mPage;
 
 
+        protected void onPreExecute() {
+            // set gui to searching state
+            mInfoText.setVisibility(View.VISIBLE);
+            mInfoText.setText(getResources().getString(R.string.searching_txt));
+            mSearchButton.setEnabled(false);
+        }
 
+        @Override
+        protected PhotoList doInBackground(Integer... page) {
+            mPage = page[0];
+            PhotoList photos = search(SEARCH_TEXT, mPage);
+            return photos;
+        }
+
+        @Override
+        protected void onPostExecute(PhotoList result) {
+            super.onPostExecute(result);
+            SearchResultListAdapter adapter = (SearchResultListAdapter)mSearchListFragment
+                    .getListAdapter();
+            adapter.addAll(result);
+
+            // reset the gui state
+            if (result.size() == 0 && mPage == 0) { // could not find any result at all
+                mInfoText.setText(getResources().getString(R.string.no_result_txt));
+
+            } else {
+                mInfoText.setVisibility(View.GONE);
+            }
+
+            if (result.size() != 0) {//there are more pages
+                downloadPage(mPage + 1);
+            }else{ // no more pages, enable search button again
+                mSearchButton.setEnabled(true);
+            }
+        }
+
+    }
 
 }
