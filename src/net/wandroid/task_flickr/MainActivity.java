@@ -1,0 +1,185 @@
+
+package net.wandroid.task_flickr;
+
+import com.googlecode.flickrjandroid.FlickrException;
+import com.googlecode.flickrjandroid.REST;
+import com.googlecode.flickrjandroid.people.PeopleInterface;
+import com.googlecode.flickrjandroid.photos.Photo;
+import com.googlecode.flickrjandroid.photos.PhotoList;
+import com.googlecode.flickrjandroid.photos.PhotosInterface;
+import com.googlecode.flickrjandroid.photos.SearchParameters;
+
+import net.wandroid.task_flickr.ui.NameLookup;
+import net.wandroid.task_flickr.ui.SearchResult;
+import net.wandroid.task_flickr.ui.SearchResultListAdapter;
+import net.wandroid.task_flickr.ui.SearchResultListFragment.ISearchResultListClickListener;
+import net.wandroid.task_flikr.R;
+
+import org.json.JSONException;
+
+import android.app.Activity;
+import android.app.FragmentManager;
+import android.app.ListFragment;
+import android.content.Intent;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.view.Menu;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
+
+import java.io.IOException;
+import java.util.ArrayList;
+
+import javax.xml.parsers.ParserConfigurationException;
+
+public class MainActivity extends Activity implements ISearchResultListClickListener{
+
+    private static final String SEARCH_TEXT = "squirrel";
+    private static final int MAX_HITS = 30;
+    private ListFragment mSearchListFragment;
+    private NameLookup mNameLookup;
+    private TextView mInfoText;
+    private Button mSearchButton;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        mInfoText=(TextView)findViewById(R.id.activity_main_info_text);
+        mSearchButton=(Button)findViewById(R.id.activity_main_search_button);
+
+        FragmentManager manager=getFragmentManager();
+        mSearchListFragment= (ListFragment)manager.findFragmentById(R.id.main_list_fragment);
+
+        String key=getResources().getString(R.string.API_KEY);
+        String secret=getResources().getString(R.string.API_SECRET);
+        REST rest;
+        try {
+            rest = new REST();
+        } catch (ParserConfigurationException e) {
+            mInfoText.setText("Error initating REST");
+            mInfoText.setVisibility(View.VISIBLE);
+            mSearchButton.setVisibility(View.GONE);
+            e.printStackTrace();
+            return;
+        }
+        mNameLookup=new NameLookup(new PeopleInterface(key, secret, rest));
+    }
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    public void searchClick(View v){
+        //clear old search results
+        SearchResultListAdapter adapter= (SearchResultListAdapter)mSearchListFragment.getListAdapter();
+        adapter.clear();
+
+        new AsyncTask<Void, Void, ArrayList<SearchResult>>(){
+
+            protected void onPreExecute() {
+                // set gui to searching state
+                mInfoText.setVisibility(View.VISIBLE);
+                mInfoText.setText(getResources().getString(R.string.searching_txt));
+                mSearchButton.setEnabled(false);
+            }
+
+            @Override
+            protected ArrayList<SearchResult> doInBackground(Void... arg0) {
+                PhotoList photos = search(SEARCH_TEXT);
+                ArrayList<SearchResult> list=new ArrayList<SearchResult>();
+                for(Photo p:photos){
+                    String id=p.getOwner().getId();
+                    String userName=null;
+                    try {
+                        //find user name corresponding to the user ID
+                        userName=mNameLookup.IdToUserName(id);
+                    } catch (IOException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    } catch (FlickrException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    } catch (JSONException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                    if(userName==null){
+                        //if there was an error or the user name could not be found
+                        userName=getResources().getString(R.string.no_user_name_txt);
+                    }
+                    list.add(new SearchResult(p, userName));
+                }
+                return list;
+            }
+
+            @Override
+            protected void onPostExecute(ArrayList<SearchResult> result) {
+                super.onPostExecute(result);
+                SearchResultListAdapter adapter= (SearchResultListAdapter)mSearchListFragment.getListAdapter();
+                adapter.addAll(result);
+
+                //reset the gui state
+                if(result.size()==0){  // could not find any result
+                    mInfoText.setText(getResources().getString(R.string.no_result_txt));
+                }else{
+                    mInfoText.setVisibility(View.GONE);
+                }
+                mSearchButton.setEnabled(true);
+            }
+
+        }.execute();
+
+    }
+
+
+    /**
+     * Uses flickr api to search. Must not be executed on main thread
+     * @param text The text to search for
+     * @return a PhotoList with matches. If any error occurs an empty list will be returned
+     */
+    private PhotoList search(String text){
+        REST restTransport;
+        PhotoList list =new PhotoList();
+        try {
+            restTransport=new REST();
+            String apiKey=getResources().getString(R.string.API_KEY);
+            String apiSecret=getResources().getString(R.string.API_SECRET);
+            PhotosInterface pi=new PhotosInterface(apiKey, apiSecret, restTransport);
+            SearchParameters params=new SearchParameters();
+            params.setText(text);
+            list=pi.search(params, MAX_HITS, 0);
+        } catch (ParserConfigurationException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (FlickrException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (JSONException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return list;
+
+    }
+
+    @Override
+    public void itemClicked(SearchResult result) {
+        //Item in list clicked, start the view activity
+        Intent intent=new Intent(getApplicationContext(), ViewActivity.class);
+        intent.putExtra(ViewActivity.FLICKR_USER_ID, result.getUserId());
+        startActivity(intent);
+    }
+
+
+
+
+
+}

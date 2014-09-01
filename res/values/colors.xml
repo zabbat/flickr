@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="activity_main_bg">#AAAAFF</color>
+    <color name="word_search_item_bg">#FFFFFF</color>
+</resources>
