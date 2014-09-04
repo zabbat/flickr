@@ -22,23 +22,28 @@ import android.widget.ListView;
 public class SearchResultListFragment extends ListFragment implements OnScrollListener {
 
     private static final int CLOSE_TO_BOTTOM_OFFSET = 10;
+
     private ISearchResultListListener mSearchResultListListener = ISearchResultListListener.NO_LISTENER;
+
+    private ArrayAdapter<Photo> mAdapter;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-
-        ArrayAdapter<Photo> adapter = new SearchResultListAdapter(getActivity(),
-                R.layout.word_search_item);
-        setListAdapter(adapter);
-
+        if (mAdapter == null) {
+            mAdapter = new SearchResultListAdapter(getActivity(),
+                    R.layout.word_search_item);
+            setListAdapter(mAdapter);
+        }
+        // don't kill fragment on configuration change
+        setRetainInstance(true);
         return inflater.inflate(R.layout.word_search_list, container, false);
     }
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        final ListView listi = getListView();
-        listi.setOnScrollListener(this);
+        final ListView list = getListView();
+        list.setOnScrollListener(this);
     }
 
     @Override
@@ -85,10 +90,10 @@ public class SearchResultListFragment extends ListFragment implements OnScrollLi
     @Override
     public void onScroll(AbsListView list, int arg1, int arg2, int arg3) {
 
-        if(list.getCount()==0){
+        if (list.getCount() == 0) {
             return;
         }
-        //scrolled to last item
+        // scrolled to last item
         if (list.getLastVisiblePosition() > list.getAdapter().getCount() - CLOSE_TO_BOTTOM_OFFSET) {
             mSearchResultListListener.onScrolledCloseToBottom();
         }

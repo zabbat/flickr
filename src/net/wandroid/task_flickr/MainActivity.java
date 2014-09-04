@@ -53,6 +53,10 @@ public class MainActivity extends Activity implements ISearchResultListListener 
 
         FragmentManager manager = getFragmentManager();
         mSearchListFragment = (ListFragment)manager.findFragmentById(R.id.main_list_fragment);
+
+        if(!mSearchListFragment.getListAdapter().isEmpty()){
+            mInfoText.setVisibility(View.GONE);
+        }
     }
 
     @Override

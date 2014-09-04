@@ -4,12 +4,14 @@ package net.wandroid.task_flickr.ui;
 import net.wandroid.task_flikr.R;
 
 import android.app.Fragment;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 
@@ -19,19 +21,19 @@ import java.util.ArrayList;
 public class UserImageGridFragment extends Fragment {
 
     private GridView mGridView;
+    private ArrayAdapter<String> mAdapter;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.user_images_grid, container, false);
         mGridView = (GridView)view.findViewById(R.id.user_images_gridview);
 
-        ArrayList<String> list = new ArrayList<String>();
-        ArrayAdapter<String> adapter = new UserImageAdapter(getActivity(), R.layout.user_image_item);
-        adapter.addAll(list);
-        mGridView.setAdapter(adapter);
+        if(mAdapter==null){
+            mAdapter = new UserImageAdapter(getActivity(), R.layout.user_image_item);
+        }
+        mGridView.setAdapter(mAdapter);
 
-        // do not kill the fragment onConfigurationChanged, just relayout
-        // this view will contain a lot of images
+        // do not kill the fragment onConfigurationChanged
         setRetainInstance(true);
         return view;
     }
@@ -43,8 +45,7 @@ public class UserImageGridFragment extends Fragment {
      *            thumbnail urls
      */
     public void setGridList(ArrayList<String> list) {
-        UserImageAdapter adapter = (UserImageAdapter)mGridView.getAdapter();
-        adapter.addAll(list);
+        mAdapter.addAll(list);
     }
 
 }

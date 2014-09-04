@@ -18,10 +18,12 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.NavUtils;
+import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -37,6 +39,8 @@ public class ViewActivity extends Activity {
     private UserImageGridFragment mGridFragment;
 
     private TextView mInfoText;
+
+    private String mUserId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,11 +60,20 @@ public class ViewActivity extends Activity {
                 || !intent.getExtras().containsKey(FLICKR_USER_ID)) {
             mInfoText.setText(getResources().getString(R.string.bad_intentions_txt));
             mInfoText.setVisibility(View.VISIBLE);
+            Toast.makeText(getApplicationContext(), "recreate", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        final String userId = intent.getExtras().getString(FLICKR_USER_ID);
+        mUserId = intent.getExtras().getString(FLICKR_USER_ID);
 
+
+    }
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if(TextUtils.isEmpty(mUserId)){
+            return;
+        }
         //Start downloading the images
         new AsyncTask<Void, Void, ArrayList<String>>() {
 
@@ -72,7 +85,7 @@ public class ViewActivity extends Activity {
 
             @Override
             protected ArrayList<String> doInBackground(Void... arg0) {
-                PhotoList photos = search(userId);
+                PhotoList photos = search(mUserId);
 
                 ArrayList<String> list = new ArrayList<String>();
                 for (Photo p : photos) {
