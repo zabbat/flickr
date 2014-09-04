@@ -60,17 +60,15 @@ public class ViewActivity extends Activity {
                 || !intent.getExtras().containsKey(FLICKR_USER_ID)) {
             mInfoText.setText(getResources().getString(R.string.bad_intentions_txt));
             mInfoText.setVisibility(View.VISIBLE);
-            Toast.makeText(getApplicationContext(), "recreate", Toast.LENGTH_SHORT).show();
             return;
         }
 
         mUserId = intent.getExtras().getString(FLICKR_USER_ID);
-
-
+        loadResult();
     }
-    @Override
-    protected void onStart() {
-        super.onStart();
+
+    private void loadResult() {
+
         if(TextUtils.isEmpty(mUserId)){
             return;
         }
