@@ -18,16 +18,20 @@ import android.widget.TextView;
  * Adapter for user image
  */
 public class UserImageAdapter extends ArrayAdapter<String> {
-    private static final int PART_MEM_FOR_CAHCE = 4;
+    private static final int PART_MEM_FOR_CACHE = 4;
 
     private static final int IMAGE_NAME_LENGTH = 12;
 
-    private static final int sMaxMemory = (int)(Runtime.getRuntime().maxMemory() / 1024);
+    private static final int sMaxMemory = (int)(Runtime.getRuntime().maxMemory());
 
     private final Bitmap DEFAULT_BITMAP;
 
     private static LruCache<String, Bitmap> sLruCache = new LruCache<String, Bitmap>(sMaxMemory
-            / PART_MEM_FOR_CAHCE);
+            / PART_MEM_FOR_CACHE){
+        protected int sizeOf(String key, Bitmap value) {
+            return value.getByteCount();
+        }
+    };
 
     private LayoutInflater mInflater;
 

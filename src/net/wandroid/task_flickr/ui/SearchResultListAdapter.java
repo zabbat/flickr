@@ -34,10 +34,14 @@ import javax.xml.parsers.ParserConfigurationException;
 public class SearchResultListAdapter extends ArrayAdapter<Photo> {
     private static final int PART_MEM_FOR_CACHE = 4;
 
-    private static final int sMaxMemory = (int)(Runtime.getRuntime().maxMemory() / 1024);
+    private static final int sMaxMemory = (int)(Runtime.getRuntime().maxMemory());
 
     private static LruCache<String, Bitmap> sThumbnailLru = new LruCache<String, Bitmap>(sMaxMemory
-            / PART_MEM_FOR_CACHE);
+            / PART_MEM_FOR_CACHE){
+        protected int sizeOf(String key, Bitmap value) {
+            return value.getByteCount();
+        }
+    };
 
     private final Bitmap DEFAULT_BITMAP;
 
