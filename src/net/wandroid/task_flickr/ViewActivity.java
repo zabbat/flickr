@@ -40,7 +40,6 @@ public class ViewActivity extends Activity {
 
     private TextView mInfoText;
 
-    private String mUserId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,17 +62,16 @@ public class ViewActivity extends Activity {
             return;
         }
 
-        mUserId = intent.getExtras().getString(FLICKR_USER_ID);
-        loadResult();
+        if(mGridFragment.isEmpty()){
+            //only load list if there is no content
+            String userId = intent.getExtras().getString(FLICKR_USER_ID);
+            loadResult(userId);
+        }
     }
 
-    private void loadResult() {
-
-        if(TextUtils.isEmpty(mUserId)){
-            return;
-        }
+    private void loadResult(String userId) {
         //Start downloading the images
-        new AsyncTask<Void, Void, ArrayList<String>>() {
+        new AsyncTask<String, Void, ArrayList<String>>() {
 
             protected void onPreExecute() {
                 //set searching state
@@ -82,8 +80,8 @@ public class ViewActivity extends Activity {
             }
 
             @Override
-            protected ArrayList<String> doInBackground(Void... arg0) {
-                PhotoList photos = search(mUserId);
+            protected ArrayList<String> doInBackground(String... userId) {
+                PhotoList photos = search(userId[0]);
 
                 ArrayList<String> list = new ArrayList<String>();
                 for (Photo p : photos) {
@@ -103,7 +101,7 @@ public class ViewActivity extends Activity {
                 mGridFragment.setGridList(list);
             };
 
-        }.execute();
+        }.execute(userId);
     }
 
     /**

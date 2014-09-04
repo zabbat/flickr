@@ -48,4 +48,8 @@ public class UserImageGridFragment extends Fragment {
         mAdapter.addAll(list);
     }
 
+    public boolean isEmpty(){
+        return mAdapter.isEmpty();
+    }
+
 }
