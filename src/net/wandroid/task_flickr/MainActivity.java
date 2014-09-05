@@ -8,6 +8,8 @@ import com.googlecode.flickrjandroid.photos.PhotoList;
 import com.googlecode.flickrjandroid.photos.PhotosInterface;
 import com.googlecode.flickrjandroid.photos.SearchParameters;
 
+import net.wandroid.task_flickr.ui.SearchFragment;
+import net.wandroid.task_flickr.ui.SearchFragment.ISearchViewListener;
 import net.wandroid.task_flickr.ui.SearchResultListAdapter;
 import net.wandroid.task_flickr.ui.SearchResultListFragment.ISearchResultListListener;
 import net.wandroid.task_flikr.R;
@@ -28,11 +30,9 @@ import java.io.IOException;
 
 import javax.xml.parsers.ParserConfigurationException;
 
-public class MainActivity extends Activity implements ISearchResultListListener {
+public class MainActivity extends Activity implements ISearchResultListListener,ISearchViewListener {
 
     private static final int FIRST_PAGE = 1;
-
-    private static final String SEARCH_TEXT = "squirrel";
 
     private static final int MAX_HITS = 10;
 
@@ -42,7 +42,10 @@ public class MainActivity extends Activity implements ISearchResultListListener 
 
     private int mPage = FIRST_PAGE;
 
+    private String mSearchText;
+
     private boolean mIsLoadingList = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,11 +69,15 @@ public class MainActivity extends Activity implements ISearchResultListListener 
         return true;
     }
 
-    public void searchClick(View v) {
+    @Override
+    public void onSearchButtonClick(String searchText) {
+        mSearchText=searchText;
+
         // clear old search results
         SearchResultListAdapter adapter = (SearchResultListAdapter)mSearchListFragment
                 .getListAdapter();
         adapter.clear();
+
         mPage = FIRST_PAGE;
         downloadPage(mPage);
     }
@@ -81,7 +88,8 @@ public class MainActivity extends Activity implements ISearchResultListListener 
      * @param page the page to load
      */
     private void downloadPage(int page) {
-        new DownloadPhotoInfoTask().execute(page);
+
+        new DownloadPhotoInfoTask(mSearchText).execute(page);
     }
 
     /**
@@ -128,6 +136,11 @@ public class MainActivity extends Activity implements ISearchResultListListener 
 
     private class DownloadPhotoInfoTask extends AsyncTask<Integer, Void, PhotoList> {
         private int mPage;
+        private final String mSearchText;
+
+        public DownloadPhotoInfoTask(String searchText) {
+            mSearchText=searchText;
+        }
 
         protected void onPreExecute() {
             // set gui to searching state
@@ -138,7 +151,7 @@ public class MainActivity extends Activity implements ISearchResultListListener 
         @Override
         protected PhotoList doInBackground(Integer... page) {
             mPage = page[0];
-            PhotoList photos = search(SEARCH_TEXT, mPage);
+            PhotoList photos = search(mSearchText, mPage);
             return photos;
         }
 
@@ -151,9 +164,7 @@ public class MainActivity extends Activity implements ISearchResultListListener 
 
             // reset the gui state
             if (result.isEmpty() && mPage == FIRST_PAGE) { // could not find any result
-                                                    // at all
                 mInfoText.setText(getResources().getString(R.string.no_result_txt));
-
             } else {
                 mInfoText.setVisibility(View.GONE);
             }
@@ -165,7 +176,7 @@ public class MainActivity extends Activity implements ISearchResultListListener 
 
     @Override
     public void onScrolledCloseToBottom() {
-        if (!mIsLoadingList) {//only load a page at the time
+        if (!mIsLoadingList) {//only load one page at the time
             mIsLoadingList=true;
             mPage++;
             downloadPage(mPage);
