@@ -15,5 +15,5 @@
     <string name="loading_txt">Loading...</string>
     
     <string name="search_button_txt">Search</string>
-
+    <string name="search_edit_hint_txt">Search Image</string>
 </resources>
