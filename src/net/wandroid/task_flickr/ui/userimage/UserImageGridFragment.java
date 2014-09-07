@@ -1,5 +1,5 @@
 
-package net.wandroid.task_flickr.ui;
+package net.wandroid.task_flickr.ui.userimage;
 
 import net.wandroid.task_flikr.R;
 
@@ -28,8 +28,9 @@ public class UserImageGridFragment extends Fragment {
 
         if(mAdapter==null){
             mAdapter = new UserImageAdapter(getActivity(), R.layout.user_image_item);
+            mGridView.setAdapter(mAdapter);
         }
-        mGridView.setAdapter(mAdapter);
+
 
         // do not kill the fragment onConfigurationChanged
         setRetainInstance(true);

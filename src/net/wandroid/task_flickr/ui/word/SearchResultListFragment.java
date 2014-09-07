@@ -1,5 +1,5 @@
 
-package net.wandroid.task_flickr.ui;
+package net.wandroid.task_flickr.ui.word;
 
 import com.googlecode.flickrjandroid.photos.Photo;
 
@@ -27,16 +27,20 @@ public class SearchResultListFragment extends ListFragment implements OnScrollLi
 
     private ArrayAdapter<Photo> mAdapter;
 
+    private ListView mListView;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         if (mAdapter == null) {
-            mAdapter = new SearchResultListAdapter(getActivity(),
-                    R.layout.word_search_item);
+            mAdapter = new SearchResultListAdapter(getActivity(), R.layout.word_search_item);
             setListAdapter(mAdapter);
+        }
+        if (mListView == null) {
+            mListView = (ListView)inflater.inflate(R.layout.word_search_list, container, false);
         }
         // don't kill fragment on configuration change
         setRetainInstance(true);
-        return inflater.inflate(R.layout.word_search_list, container, false);
+        return mListView;
     }
 
     @Override
@@ -44,6 +48,7 @@ public class SearchResultListFragment extends ListFragment implements OnScrollLi
         super.onActivityCreated(savedInstanceState);
         final ListView list = getListView();
         list.setOnScrollListener(this);
+        mSearchResultListListener.onSearchResultListFragmentReady(this);
     }
 
     @Override
@@ -75,6 +80,8 @@ public class SearchResultListFragment extends ListFragment implements OnScrollLi
 
         public void onScrolledCloseToBottom();
 
+        public void onSearchResultListFragmentReady(SearchResultListFragment fragment);
+
         // Null object pattern, to avoid pesky null checks.
         public static ISearchResultListListener NO_LISTENER = new ISearchResultListListener() {
             @Override
@@ -83,6 +90,10 @@ public class SearchResultListFragment extends ListFragment implements OnScrollLi
 
             @Override
             public void onScrolledCloseToBottom() {
+            }
+
+            @Override
+            public void onSearchResultListFragmentReady(SearchResultListFragment fragment) {
             }
         };
     }

@@ -7,7 +7,7 @@ import com.googlecode.flickrjandroid.people.PeopleInterface;
 import com.googlecode.flickrjandroid.photos.Photo;
 import com.googlecode.flickrjandroid.photos.PhotoList;
 
-import net.wandroid.task_flickr.ui.UserImageGridFragment;
+import net.wandroid.task_flickr.ui.userimage.UserImageGridFragment;
 import net.wandroid.task_flikr.R;
 
 import org.json.JSONException;

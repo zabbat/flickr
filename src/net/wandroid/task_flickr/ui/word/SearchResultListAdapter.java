@@ -1,5 +1,5 @@
 
-package net.wandroid.task_flickr.ui;
+package net.wandroid.task_flickr.ui.word;
 
 import com.googlecode.flickrjandroid.FlickrException;
 import com.googlecode.flickrjandroid.REST;
@@ -8,6 +8,8 @@ import com.googlecode.flickrjandroid.photos.Photo;
 
 import org.json.JSONException;
 
+import net.wandroid.task_flickr.ui.DownloadThumbnailTask;
+import net.wandroid.task_flickr.ui.NameLookup;
 import net.wandroid.task_flikr.R;
 
 import android.content.Context;

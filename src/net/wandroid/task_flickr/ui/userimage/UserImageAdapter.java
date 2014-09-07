@@ -1,6 +1,7 @@
 
-package net.wandroid.task_flickr.ui;
+package net.wandroid.task_flickr.ui.userimage;
 
+import net.wandroid.task_flickr.ui.DownloadThumbnailTask;
 import net.wandroid.task_flikr.R;
 
 import android.content.Context;

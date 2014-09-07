@@ -8,37 +8,48 @@ import com.googlecode.flickrjandroid.photos.PhotoList;
 import com.googlecode.flickrjandroid.photos.PhotosInterface;
 import com.googlecode.flickrjandroid.photos.SearchParameters;
 
-import net.wandroid.task_flickr.ui.SearchFragment;
+import net.wandroid.task_flickr.ui.ResultFragmentPagerAdapter;
 import net.wandroid.task_flickr.ui.SearchFragment.ISearchViewListener;
-import net.wandroid.task_flickr.ui.SearchResultListAdapter;
-import net.wandroid.task_flickr.ui.SearchResultListFragment.ISearchResultListListener;
+import net.wandroid.task_flickr.ui.word.SearchResultGridFragment;
+import net.wandroid.task_flickr.ui.word.SearchResultGridFragment.ISearchResultGridListener;
+import net.wandroid.task_flickr.ui.word.SearchResultListAdapter;
+import net.wandroid.task_flickr.ui.word.SearchResultListFragment;
+import net.wandroid.task_flickr.ui.word.SearchResultListFragment.ISearchResultListListener;
 import net.wandroid.task_flikr.R;
 
 import org.json.JSONException;
 
 import android.app.Activity;
 import android.app.FragmentManager;
-import android.app.ListFragment;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.view.ViewPager;
 import android.view.Menu;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
 import java.io.IOException;
 
 import javax.xml.parsers.ParserConfigurationException;
 
-public class MainActivity extends Activity implements ISearchResultListListener,ISearchViewListener {
+public class MainActivity extends Activity implements ISearchResultListListener,
+        ISearchResultGridListener, ISearchViewListener {
 
     private static final int FIRST_PAGE = 1;
 
     private static final int MAX_HITS = 10;
 
-    private ListFragment mSearchListFragment;
-
     private TextView mInfoText;
+
+    private SearchResultListFragment mSearchListFragment;
+
+    private SearchResultGridFragment mSearchGridFragment;
+
+    private ViewPager mViewPager;
+
+    private ResultFragmentPagerAdapter mPageAdapter;
 
     private int mPage = FIRST_PAGE;
 
@@ -46,20 +57,24 @@ public class MainActivity extends Activity implements ISearchResultListListener,
 
     private boolean mIsLoadingList = false;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mInfoText = (TextView)findViewById(R.id.activity_main_info_text);
+        mInfoText = (TextView)findViewById(R.id.main_info_text);
+
+        mViewPager = (ViewPager)findViewById(R.id.main_pager);
 
         FragmentManager manager = getFragmentManager();
-        mSearchListFragment = (ListFragment)manager.findFragmentById(R.id.main_list_fragment);
+        mPageAdapter = new ResultFragmentPagerAdapter(manager);
+        mViewPager.setAdapter(mPageAdapter);
+        // mSearchListFragment =
+        // (ListFragment)manager.findFragmentById(R.id.main_list_fragment);
 
-        if(!mSearchListFragment.getListAdapter().isEmpty()){
-            mInfoText.setVisibility(View.GONE);
-        }
+        // if(!mSearchListFragment.getListAdapter().isEmpty()){
+        // mInfoText.setVisibility(View.GONE);
+        // }
     }
 
     @Override
@@ -71,15 +86,22 @@ public class MainActivity extends Activity implements ISearchResultListListener,
 
     @Override
     public void onSearchButtonClick(String searchText) {
-        mSearchText=searchText;
-
-        // clear old search results
-        SearchResultListAdapter adapter = (SearchResultListAdapter)mSearchListFragment
-                .getListAdapter();
-        adapter.clear();
-
+        clearSearch();
+        mSearchText = searchText;
         mPage = FIRST_PAGE;
         downloadPage(mPage);
+    }
+
+    private void clearSearch() {
+        if (mSearchListFragment != null) {
+            ArrayAdapter<?> adapter = (ArrayAdapter<?>)mSearchListFragment.getListAdapter();
+            adapter.clear();
+        }
+        if (mSearchGridFragment != null) {
+            ArrayAdapter<?> adapter = (ArrayAdapter<?>)mSearchGridFragment.getGridView()
+                    .getAdapter();
+            adapter.clear();
+        }
     }
 
     /**
@@ -136,16 +158,17 @@ public class MainActivity extends Activity implements ISearchResultListListener,
 
     private class DownloadPhotoInfoTask extends AsyncTask<Integer, Void, PhotoList> {
         private int mPage;
+
         private final String mSearchText;
 
         public DownloadPhotoInfoTask(String searchText) {
-            mSearchText=searchText;
+            mSearchText = searchText;
         }
 
         protected void onPreExecute() {
             // set gui to searching state
-            mInfoText.setVisibility(View.VISIBLE);
-            mInfoText.setText(getResources().getString(R.string.searching_txt));
+            setInfoTextVisible(true);
+            setInfoText(getResources().getString(R.string.searching_txt));
         }
 
         @Override
@@ -158,29 +181,58 @@ public class MainActivity extends Activity implements ISearchResultListListener,
         @Override
         protected void onPostExecute(PhotoList result) {
             super.onPostExecute(result);
-            SearchResultListAdapter adapter = (SearchResultListAdapter)mSearchListFragment
+            addAllResults(result);
+
+            // reset the gui state
+            if (result.isEmpty() && mPage == FIRST_PAGE) { // could not find any
+                                                           // result
+                setInfoText(getResources().getString(R.string.no_result_txt));
+            } else {
+                setInfoTextVisible(false);
+                // mInfoText.setVisibility(View.GONE);
+            }
+
+            mIsLoadingList = false;
+        }
+
+        private void addAllResults(PhotoList result) {
+            ArrayAdapter<Photo> adapter = (SearchResultListAdapter)mSearchListFragment
                     .getListAdapter();
             adapter.addAll(result);
 
-            // reset the gui state
-            if (result.isEmpty() && mPage == FIRST_PAGE) { // could not find any result
-                mInfoText.setText(getResources().getString(R.string.no_result_txt));
-            } else {
-                mInfoText.setVisibility(View.GONE);
-            }
-
-            mIsLoadingList=false;
+            adapter = (SearchResultListAdapter)mSearchGridFragment.getGridView().getAdapter();
+            adapter.addAll(result);
         }
 
     }
 
+    public void setInfoText(String text) {
+        mInfoText.setText(text);
+    }
+
+    public void setInfoTextVisible(boolean visible) {
+        mInfoText.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
+    }
+
     @Override
     public void onScrolledCloseToBottom() {
-        if (!mIsLoadingList) {//only load one page at the time
-            mIsLoadingList=true;
+        if (!mIsLoadingList) {// only load one page at the time
+            mIsLoadingList = true;
             mPage++;
             downloadPage(mPage);
         }
+    }
+
+    @Override
+    public void onSearchResultListFragmentReady(SearchResultListFragment fragment) {
+        mSearchListFragment = fragment;
+        setInfoTextVisible(mSearchListFragment.getListAdapter().isEmpty());
+    }
+
+    @Override
+    public void onSearchResultGridFragmentReady(SearchResultGridFragment fragment) {
+        mSearchGridFragment = fragment;
+        setInfoTextVisible(mSearchGridFragment.getGridView().getAdapter().isEmpty());
     }
 
 }
