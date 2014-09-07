@@ -10,11 +10,11 @@ import com.googlecode.flickrjandroid.photos.SearchParameters;
 
 import net.wandroid.task_flickr.ui.ResultFragmentPagerAdapter;
 import net.wandroid.task_flickr.ui.SearchFragment.ISearchViewListener;
+import net.wandroid.task_flickr.ui.word.SearchResultAdapter;
 import net.wandroid.task_flickr.ui.word.SearchResultGridFragment;
 import net.wandroid.task_flickr.ui.word.SearchResultGridFragment.ISearchResultGridListener;
-import net.wandroid.task_flickr.ui.word.SearchResultListAdapter;
 import net.wandroid.task_flickr.ui.word.SearchResultListFragment;
-import net.wandroid.task_flickr.ui.word.SearchResultListFragment.ISearchResultListListener;
+import net.wandroid.task_flickr.ui.word.SearchResultListFragment.ISearchResultListFragmentListener;
 import net.wandroid.task_flikr.R;
 
 import org.json.JSONException;
@@ -34,12 +34,12 @@ import java.io.IOException;
 
 import javax.xml.parsers.ParserConfigurationException;
 
-public class MainActivity extends Activity implements ISearchResultListListener,
+public class MainActivity extends Activity implements ISearchResultListFragmentListener,
         ISearchResultGridListener, ISearchViewListener {
 
     private static final int FIRST_PAGE = 1;
 
-    private static final int MAX_HITS = 10;
+    private static final int MAX_HITS = 20;
 
     private TextView mInfoText;
 
@@ -69,12 +69,7 @@ public class MainActivity extends Activity implements ISearchResultListListener,
         FragmentManager manager = getFragmentManager();
         mPageAdapter = new ResultFragmentPagerAdapter(manager);
         mViewPager.setAdapter(mPageAdapter);
-        // mSearchListFragment =
-        // (ListFragment)manager.findFragmentById(R.id.main_list_fragment);
 
-        // if(!mSearchListFragment.getListAdapter().isEmpty()){
-        // mInfoText.setVisibility(View.GONE);
-        // }
     }
 
     @Override
@@ -110,7 +105,6 @@ public class MainActivity extends Activity implements ISearchResultListListener,
      * @param page the page to load
      */
     private void downloadPage(int page) {
-
         new DownloadPhotoInfoTask(mSearchText).execute(page);
     }
 
@@ -196,11 +190,11 @@ public class MainActivity extends Activity implements ISearchResultListListener,
         }
 
         private void addAllResults(PhotoList result) {
-            ArrayAdapter<Photo> adapter = (SearchResultListAdapter)mSearchListFragment
+            ArrayAdapter<Photo> adapter = (SearchResultAdapter)mSearchListFragment
                     .getListAdapter();
             adapter.addAll(result);
 
-            adapter = (SearchResultListAdapter)mSearchGridFragment.getGridView().getAdapter();
+            adapter = (SearchResultAdapter)mSearchGridFragment.getGridView().getAdapter();
             adapter.addAll(result);
         }
 

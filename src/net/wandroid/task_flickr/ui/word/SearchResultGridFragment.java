@@ -11,10 +11,13 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
+import android.widget.AbsListView.OnScrollListener;
 
-public class SearchResultGridFragment extends Fragment {
+public class SearchResultGridFragment extends Fragment implements OnScrollListener {
+    private static final int CLOSE_TO_BOTTOM_OFFSET = 10;
 
     private ArrayAdapter<Photo> mAdapter;
 
@@ -25,22 +28,22 @@ public class SearchResultGridFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        if(mGridView==null){
-            mGridView=(GridView)inflater.inflate(R.layout.word_search_grid, container, false);
+        if (mGridView == null) {
+            mGridView = (GridView)inflater.inflate(R.layout.word_search_grid, container, false);
         }
 
         if (mGridView.getAdapter() == null) {
-            mAdapter = new SearchResultListAdapter(getActivity(), R.layout.word_search_item);
+            mAdapter = new SearchGridAdapter(getActivity(), R.layout.word_search_item);
             mGridView.setAdapter(mAdapter);
         }
         setRetainInstance(true);
         return mGridView;
     }
 
-
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
+        mGridView.setOnScrollListener(this);
         mSearchResultGridListener.onSearchResultGridFragmentReady(this);
     }
 
@@ -62,12 +65,39 @@ public class SearchResultGridFragment extends Fragment {
         return mGridView;
     }
 
-    public interface ISearchResultGridListener {
+    @Override
+    public void onScroll(AbsListView list, int arg1, int arg2, int arg3) {
+
+        if (list.getCount() == 0) {
+            return;
+        }
+        // scrolled to last item
+        if (list.getLastVisiblePosition() > list.getAdapter().getCount() - CLOSE_TO_BOTTOM_OFFSET) {
+            mSearchResultGridListener.onScrolledCloseToBottom();
+        }
+
+    }
+
+    @Override
+    public void onScrollStateChanged(AbsListView arg0, int arg1) {
+        // TODO Auto-generated method stub
+    }
+
+    public interface ISearchResultGridListener extends ISearchResultListener {
         void onSearchResultGridFragmentReady(SearchResultGridFragment fragment);
 
         public static final ISearchResultGridListener NO_LISTENER = new ISearchResultGridListener() {
             @Override
             public void onSearchResultGridFragmentReady(SearchResultGridFragment fragment) {
+            }
+
+            @Override
+            public void itemClicked(Photo result) {
+            }
+
+            @Override
+            public void onScrolledCloseToBottom() {
+
             }
         };
     }

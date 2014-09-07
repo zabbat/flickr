@@ -23,7 +23,7 @@ public class SearchResultListFragment extends ListFragment implements OnScrollLi
 
     private static final int CLOSE_TO_BOTTOM_OFFSET = 10;
 
-    private ISearchResultListListener mSearchResultListListener = ISearchResultListListener.NO_LISTENER;
+    private ISearchResultListFragmentListener mSearchResultListListener = ISearchResultListFragmentListener.NO_LISTENER;
 
     private ArrayAdapter<Photo> mAdapter;
 
@@ -32,7 +32,7 @@ public class SearchResultListFragment extends ListFragment implements OnScrollLi
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         if (mAdapter == null) {
-            mAdapter = new SearchResultListAdapter(getActivity(), R.layout.word_search_item);
+            mAdapter = new SearchListAdapter(getActivity(), R.layout.word_search_item);
             setListAdapter(mAdapter);
         }
         if (mListView == null) {
@@ -54,15 +54,15 @@ public class SearchResultListFragment extends ListFragment implements OnScrollLi
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
-        if (activity instanceof ISearchResultListListener) {
-            mSearchResultListListener = (ISearchResultListListener)activity;
+        if (activity instanceof ISearchResultListFragmentListener) {
+            mSearchResultListListener = (ISearchResultListFragmentListener)activity;
         }
     }
 
     @Override
     public void onDetach() {
         super.onDetach();
-        mSearchResultListListener = ISearchResultListListener.NO_LISTENER;
+        mSearchResultListListener = ISearchResultListFragmentListener.NO_LISTENER;
     }
 
     @Override
@@ -70,32 +70,6 @@ public class SearchResultListFragment extends ListFragment implements OnScrollLi
         super.onListItemClick(l, v, position, id);
         Photo result = (Photo)getListAdapter().getItem(position);
         mSearchResultListListener.itemClicked(result);
-    }
-
-    /**
-     * Interface for listening to a list click.
-     */
-    public interface ISearchResultListListener {
-        public void itemClicked(Photo result);
-
-        public void onScrolledCloseToBottom();
-
-        public void onSearchResultListFragmentReady(SearchResultListFragment fragment);
-
-        // Null object pattern, to avoid pesky null checks.
-        public static ISearchResultListListener NO_LISTENER = new ISearchResultListListener() {
-            @Override
-            public void itemClicked(Photo result) {
-            }
-
-            @Override
-            public void onScrolledCloseToBottom() {
-            }
-
-            @Override
-            public void onSearchResultListFragmentReady(SearchResultListFragment fragment) {
-            }
-        };
     }
 
     @Override
@@ -114,6 +88,28 @@ public class SearchResultListFragment extends ListFragment implements OnScrollLi
     @Override
     public void onScrollStateChanged(AbsListView arg0, int arg1) {
         // TODO Auto-generated method stub
+    }
+
+    public interface ISearchResultListFragmentListener extends ISearchResultListener {
+        public void onSearchResultListFragmentReady(SearchResultListFragment fragment);
+
+        // Null object pattern, to avoid pesky null checks.
+        public static ISearchResultListFragmentListener NO_LISTENER = new ISearchResultListFragmentListener() {
+            @Override
+            public void itemClicked(Photo result) {
+            }
+
+            @Override
+            public void onScrolledCloseToBottom() {
+            }
+
+            @Override
+            public void onSearchResultListFragmentReady(SearchResultListFragment fragment) {
+                // TODO Auto-generated method stub
+
+            }
+
+        };
     }
 
 }
