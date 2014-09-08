@@ -3,26 +3,25 @@ package net.wandroid.task_flickr.ui;
 
 import net.wandroid.task_flickr.ui.word.SearchResultGridFragment;
 import net.wandroid.task_flickr.ui.word.SearchResultListFragment;
+import net.wandroid.task_flikr.R;
 
 import android.app.Fragment;
 import android.app.FragmentManager;
+import android.content.res.Resources;
 import android.support.v13.app.FragmentPagerAdapter;
-
-import java.lang.ref.WeakReference;
-import java.util.ArrayList;
 
 public class ResultFragmentPagerAdapter extends FragmentPagerAdapter {
     // TODO: change to statepage
-    ArrayList<WeakReference<Fragment>> mPages = new ArrayList<WeakReference<Fragment>>();
 
     private static final int NR_PAGES = 2;
+    private final String TITLE_0;
+    private final String TITLE_1;
+    private static final String DEFAULT_TITLE="";
 
-    public ResultFragmentPagerAdapter(FragmentManager fm) {
+    public ResultFragmentPagerAdapter(FragmentManager fm,Resources resourses) {
         super(fm);
-
-        for (int i = 0; i < NR_PAGES; i++) {
-            mPages.add(new WeakReference<Fragment>(null));
-        }
+        TITLE_0=resourses.getString(R.string.result_fragment_page_adapter_list_title_txt);
+        TITLE_1=resourses.getString(R.string.result_fragment_page_adapter_grid_title_txt);
     }
 
     @Override
@@ -37,7 +36,6 @@ public class ResultFragmentPagerAdapter extends FragmentPagerAdapter {
                 break;
             default:
         }
-        mPages.set(position, new WeakReference<Fragment>(fragment));
         return fragment;
     }
 
@@ -48,15 +46,13 @@ public class ResultFragmentPagerAdapter extends FragmentPagerAdapter {
 
     @Override
     public CharSequence getPageTitle(int position) {
-        switch(position){
+        switch (position) {
             case 0:
-                return "List";
+                return TITLE_0;
             case 1:
-                return "Grid";
-                default:
-                return "";
+                return TITLE_1;
+            default:
+                return DEFAULT_TITLE;
         }
-
     }
-
 }

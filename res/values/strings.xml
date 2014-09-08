@@ -16,4 +16,7 @@
     
     <string name="search_button_txt">Search</string>
     <string name="search_edit_hint_txt">Search Image</string>
+    
+    <string name="result_fragment_page_adapter_list_title_txt">List</string>
+    <string name="result_fragment_page_adapter_grid_title_txt">Grid</string>
 </resources>

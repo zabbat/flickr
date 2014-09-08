@@ -10,13 +10,17 @@ import android.app.Fragment;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
 import android.widget.AbsListView.OnScrollListener;
 
-public class SearchResultGridFragment extends Fragment implements OnScrollListener {
+public class SearchResultGridFragment extends Fragment implements OnScrollListener,
+        OnItemClickListener {
     private static final int CLOSE_TO_BOTTOM_OFFSET = 10;
 
     private ArrayAdapter<Photo> mAdapter;
@@ -37,6 +41,7 @@ public class SearchResultGridFragment extends Fragment implements OnScrollListen
             mGridView.setAdapter(mAdapter);
         }
         setRetainInstance(true);
+        mGridView.setOnItemClickListener(this);
         return mGridView;
     }
 
@@ -100,6 +105,12 @@ public class SearchResultGridFragment extends Fragment implements OnScrollListen
 
             }
         };
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+        Photo result = mAdapter.getItem(position);
+        mSearchResultGridListener.itemClicked(result);
     }
 
 }

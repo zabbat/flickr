@@ -37,6 +37,10 @@ import javax.xml.parsers.ParserConfigurationException;
 public class MainActivity extends Activity implements ISearchResultListFragmentListener,
         ISearchResultGridListener, ISearchViewListener {
 
+    private static final String CURRENT_PAGE_KEY = "mPage";
+
+    private static final String SEARCH_TEXT_KEY = "mSearchText";
+
     private static final int FIRST_PAGE = 1;
 
     private static final int MAX_HITS = 20;
@@ -67,10 +71,23 @@ public class MainActivity extends Activity implements ISearchResultListFragmentL
         mViewPager = (ViewPager)findViewById(R.id.main_pager);
 
         FragmentManager manager = getFragmentManager();
-        mPageAdapter = new ResultFragmentPagerAdapter(manager);
+        mPageAdapter = new ResultFragmentPagerAdapter(manager,getResources());
         mViewPager.setAdapter(mPageAdapter);
+        if(savedInstanceState!=null){
+            mSearchText=savedInstanceState.getString(SEARCH_TEXT_KEY);
+            mPage=savedInstanceState.getInt(CURRENT_PAGE_KEY);
+        }
 
     }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putString(SEARCH_TEXT_KEY, mSearchText);
+        outState.putInt(CURRENT_PAGE_KEY, mPage);
+    }
+
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
