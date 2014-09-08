@@ -41,7 +41,7 @@ public abstract class SearchResultAdapter extends ArrayAdapter<Photo> {
         Resources res = getContext().getResources();
 
         DEFAULT_BITMAP = BitmapFactory.decodeResource(res,
-                R.drawable.ic_launcher);
+                R.drawable.unknown);
 
     }
 

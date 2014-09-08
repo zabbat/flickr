@@ -40,7 +40,7 @@ public class UserImageAdapter extends ArrayAdapter<String> {
         super(context, resource);
         mInflater = (LayoutInflater)context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         DEFAULT_BITMAP = BitmapFactory.decodeResource(getContext().getResources(),
-                R.drawable.ic_launcher);
+                R.drawable.unknown);
     }
 
     @Override
